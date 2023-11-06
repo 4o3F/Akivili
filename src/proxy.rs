@@ -43,16 +43,10 @@ impl Eq for Proxy {}
 
 impl PartialOrd for Proxy {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        if self.proxy_ip == other.proxy_ip && self.proxy_port == other.proxy_port && self.proxy_type == other.proxy_type {
+            return Some(Ordering::Equal);
+        }
         Some(self.last_used.cmp(&other.last_used))
-        // if self.proxy_ip == other.proxy_ip {
-        //     if self.proxy_port == other.proxy_port {
-        //         Some(self.proxy_type.cmp(&other.proxy_type))
-        //     } else {
-        //         Some(self.proxy_port.cmp(&other.proxy_port))
-        //     }
-        // } else {
-        //     Some(self.proxy_ip.cmp(&other.proxy_ip))
-        // }
     }
 }
 
