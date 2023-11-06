@@ -91,7 +91,6 @@ impl ProxyProvider for DocIPProvider {
         let proxies = Arc::try_unwrap(proxies).unwrap();
         let proxies = proxies.into_inner().unwrap();
         self.last_fetched = current_timestamp();
-        info!("Available proxies: {:?}", proxies);
         Ok(proxies)
     }
 }

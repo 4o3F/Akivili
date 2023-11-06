@@ -5,7 +5,7 @@ use std::ops::Deref;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use crate::provider::ProxyProvider;
+use crate::provider::update_proxy_pool;
 use anyhow::Result;
 use lazy_static::lazy_static;
 use log::{error, info};
@@ -84,20 +84,13 @@ fn main() {
                 }
             }
         }
-        {
-            let mut proxies = provider::checkerproxy::CheckerProxyProvider::new();
-            let result = proxies.fetch().await.unwrap();
-            let mut proxy_pool = PROXY_POOL.lock().unwrap();
-            for proxy in result {
-                proxy_pool.insert(proxy);
-            }
-        }
+        update_proxy_pool().await.unwrap();
         save_proxy_pool().unwrap();
     });
     info!("Starting repeat task thread");
-    let repeat_task_thread = Runtime::new().unwrap();
+    let proxy_pool_check_task = Runtime::new().unwrap();
     // Block initial thread on background repeat task
-    repeat_task_thread.block_on(async {
+    proxy_pool_check_task.spawn(async {
         let duration = Duration::from_secs(Arc::clone(&CONFIG).lock().unwrap().as_ref().unwrap().check_interval);
         let mut interval = interval_at(
             Instant::now() + duration, duration,
@@ -110,6 +103,21 @@ fn main() {
             save_proxy_pool().unwrap();
         }
     });
+
+    let proxy_pool_update_task = Runtime::new().unwrap();
+    proxy_pool_update_task.block_on(async {
+        let duration = Duration::from_secs(Arc::clone(&CONFIG).lock().unwrap().as_ref().unwrap().update_interval);
+        let mut interval = interval_at(
+            Instant::now() + duration, duration,
+        );
+        interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
+        loop {
+            interval.tick().await;
+            info!("Updating proxy pool {}", current_timestamp());
+            update_proxy_pool().await.unwrap();
+            save_proxy_pool().unwrap();
+        }
+    })
 }
 
 fn create_config() -> Result<()> {
@@ -130,7 +138,16 @@ fn load_config() -> Result<Config> {
 fn save_proxy_pool() -> Result<()> {
     let mut file = File::create("pool.json")?;
     let json = serde_json::to_string(PROXY_POOL.lock().unwrap().deref())?;
-    file.write_all(json.as_bytes()).map_err(anyhow::Error::from)
+    match file.write_all(json.as_bytes()).map_err(anyhow::Error::from) {
+        Ok(_) => {
+            info!("Saved proxy pool {}", current_timestamp());
+            Ok(())
+        }
+        Err(error) => {
+            error!("Error saving proxy pool {} {}",current_timestamp(), error);
+            Err(error)
+        }
+    }
 }
 
 fn load_proxy_pool() -> Result<BTreeSet<Proxy>> {
