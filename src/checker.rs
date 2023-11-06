@@ -1,9 +1,11 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 use std::time::Duration;
+
 use anyhow::Result;
 use log::info;
 use tokio::sync::Semaphore;
+
 use crate::{CONFIG, PROXY_POOL};
 use crate::proxy::{Proxy, ProxyType};
 use crate::time::current_timestamp;

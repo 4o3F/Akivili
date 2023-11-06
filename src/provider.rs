@@ -1,13 +1,15 @@
+use std::sync::{Arc, Mutex};
+
+use anyhow::Result;
+use async_trait::async_trait;
+use log::{error, info};
+
+use crate::{CONFIG, PROXY_POOL};
+use crate::proxy::Proxy;
+use crate::time::current_timestamp;
+
 pub mod docip;
 pub mod checkerproxy;
-
-use std::sync::{Arc, Mutex};
-use async_trait::async_trait;
-use crate::proxy::Proxy;
-use anyhow::Result;
-use log::{error, info};
-use crate::{CONFIG, PROXY_POOL};
-use crate::time::current_timestamp;
 
 #[async_trait]
 pub trait ProxyProvider {
@@ -21,6 +23,7 @@ pub async fn update_proxy_pool() -> Result<()> {
     let proxies = Arc::new(Mutex::new(Vec::<Proxy>::new()));
     let config = (*CONFIG.lock().unwrap()).clone().unwrap();
     let mut tasks = Vec::new();
+    //let join_set = JoinSet::new();
     if config.provider_checkerproxy_enabled {
         let proxies = Arc::clone(&proxies);
         tasks.push(tokio::spawn(async move {
@@ -29,6 +32,7 @@ pub async fn update_proxy_pool() -> Result<()> {
             match provider.fetch().await {
                 Ok(mut new_proxies) => {
                     proxies.lock().unwrap().append(new_proxies.as_mut());
+                    info!("CheckerProxy provider update finished")
                 }
                 Err(error) => {
                     error!("Update CheckProxy provider failed {}", error)
@@ -44,6 +48,7 @@ pub async fn update_proxy_pool() -> Result<()> {
             match provider.fetch().await {
                 Ok(mut new_proxies) => {
                     proxies.lock().unwrap().append(new_proxies.as_mut());
+                    info!("DocIP provider update finished")
                 }
                 Err(error) => {
                     error!("Update DocIP provider failed {}", error)
@@ -51,6 +56,7 @@ pub async fn update_proxy_pool() -> Result<()> {
             };
         }));
     }
+
     for task in tasks {
         task.await.unwrap();
     }

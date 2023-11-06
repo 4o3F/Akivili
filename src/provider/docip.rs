@@ -1,13 +1,15 @@
 use std::sync::{Arc, Mutex};
+
+use anyhow::Result;
 use async_trait::async_trait;
 use log::info;
 use serde::Deserialize;
+use tokio::sync::Semaphore;
+
 use crate::checker;
 use crate::provider::ProxyProvider;
 use crate::proxy::{Proxy, ProxyType};
 use crate::time::current_timestamp;
-use anyhow::Result;
-use tokio::sync::Semaphore;
 
 pub struct DocIPProvider {
     last_fetched: u64,
