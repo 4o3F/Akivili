@@ -1,3 +1,4 @@
+use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
@@ -21,7 +22,7 @@ pub trait ProxyProvider {
 
 pub async fn update_proxy_pool() -> Result<()> {
     let proxies = Arc::new(Mutex::new(Vec::<Proxy>::new()));
-    let config = (*CONFIG.lock().unwrap()).clone().unwrap();
+    let config = CONFIG.lock().unwrap().deref().clone().unwrap();
     let mut tasks = Vec::new();
     //let join_set = JoinSet::new();
     if config.provider_checkerproxy_enabled {

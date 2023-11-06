@@ -18,6 +18,7 @@ mod provider;
 mod checker;
 mod time;
 mod config;
+mod socks;
 
 lazy_static! {
     static ref CONFIG: Arc<Mutex<Option<Config>>> = Arc::new(Mutex::new(None));

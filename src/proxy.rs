@@ -67,6 +67,7 @@ impl Ord for Proxy {
 }
 
 pub fn init_proxy_pool() {
+    info!("Initializing proxy pool");
     let proxy_pool_file = Path::new("pool.json");
     if !proxy_pool_file.exists() {
         match save_proxy_pool() {
