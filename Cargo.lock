@@ -189,12 +189,10 @@ dependencies = [
 
 [[package]]
 name = "fast-socks5"
-version = "0.9.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa6a4a9ab1f87e2d8e9345ce944de7c45d065ee89f5942512f32698e48a8429a"
+version = "0.8.0"
+source = "git+https://github.com/GlenDC/fast-socks5.git?branch=patch/router-support#27932c1feac4c9c954d9a51dbf22663a5097c586"
 dependencies = [
  "anyhow",
- "async-trait",
  "log",
  "thiserror",
  "tokio",

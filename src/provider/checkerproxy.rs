@@ -79,6 +79,10 @@ impl ProxyProvider for CheckerProxyProvider {
                 last_checked: 0,
                 last_used: 0,
             };
+            // TODO: Implement http proxy chain and remove this
+            if proxy.proxy_type == ProxyType::HTTP {
+                continue;
+            }
 
             let proxies = Arc::clone(&proxies);
             let semaphore = Arc::clone(&semaphore);

@@ -28,7 +28,7 @@ impl Config {
             update_interval: 6000,
             socks_server_port: 2333,
             socks_server_timeout: 10,
-            provider_docip_enabled: true,
+            provider_docip_enabled: false,
             provider_checkerproxy_enabled: true,
         }
     }

@@ -11,6 +11,7 @@ use crate::checker::check_proxy_pool;
 use crate::config::Config;
 use crate::provider::update_proxy_pool;
 use crate::proxy::{Proxy, save_proxy_pool};
+use crate::socks::init_socks_server;
 use crate::time::current_timestamp;
 
 mod proxy;
@@ -25,8 +26,8 @@ lazy_static! {
     static ref PROXY_POOL: Arc<Mutex<BTreeSet<Proxy>>> = Arc::new(Mutex::new(BTreeSet::<Proxy>::new()));
 }
 
-
-fn main() {
+#[tokio::main]
+async fn main() {
     // Init logger
     env_logger::init();
     // Prepare for start up
@@ -58,7 +59,7 @@ fn main() {
     // Block the program on this thread
     info!("Starting proxy pool updater timer");
     let proxy_pool_update_task = Runtime::new().unwrap();
-    proxy_pool_update_task.block_on(async {
+    proxy_pool_update_task.spawn(async {
         let duration = Duration::from_secs(Arc::clone(&CONFIG).lock().unwrap().as_ref().unwrap().update_interval);
         let mut interval = interval_at(
             Instant::now(), duration,
@@ -70,6 +71,8 @@ fn main() {
             update_proxy_pool().await.unwrap();
             save_proxy_pool().unwrap();
         }
-    })
+    });
+
+    init_socks_server().await.unwrap();
 }
 
