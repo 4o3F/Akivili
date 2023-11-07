@@ -1,9 +1,12 @@
 use std::collections::BTreeSet;
+use std::fmt::Write;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use lazy_static::lazy_static;
 use log::info;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 use tokio::runtime::Runtime;
 use tokio::time::{Instant, interval_at, MissedTickBehavior};
 
@@ -24,6 +27,15 @@ mod socks;
 lazy_static! {
     static ref CONFIG: Arc<Mutex<Option<Config>>> = Arc::new(Mutex::new(None));
     static ref PROXY_POOL: Arc<Mutex<BTreeSet<Proxy>>> = Arc::new(Mutex::new(BTreeSet::<Proxy>::new()));
+}
+
+async fn test() {
+    let mut stream = TcpStream::connect("222.220.102.159:8000").await.unwrap();
+    let connect_head = String::from("CONNECT myip.ipip.net:443 HTTP/1.1\r\nHost: myip.ipip.net:443\r\nUser-Agent: curl/8.0.1\r\nProxy-Connection: Keep-Alive\r\n\r\n");
+    stream.write_all(connect_head.as_bytes()).await.unwrap();
+    let mut response = String::new();
+    stream.read_to_string(&mut response).await.unwrap();
+    info!("{}",response);
 }
 
 #[tokio::main]
